@@ -5,10 +5,23 @@
  * Date: 2014-11-05
  * Time: 14:18
  */
-
+set_time_limit(100);
 /*
  * Handles redirections and now I do not need to write all the ugly C-style initialization of curl
  */
+try{
+    if(file_exists("result.json")){
+        $previous_result_file = file_get_contents("result.json");
+        $previous_result = json_decode($previous_result_file, true);
+        if($previous_result["donewhen"]+600>time()){
+            echo "Minimum time until next scrape " . 600-(time() - $previous_result["donewhen"]);
+            var_dump($previous_result);
+            exit;
+        }
+    }
+}catch(Exception $e){
+}
+
 function curl($url, $user_agent, $retry = 0) {
     if ($retry > 5) {
         print "Maximum 5 retries are done, skipping!\n";
@@ -64,13 +77,14 @@ const COURSE_AUTHOR_XPATH = "//article[2]/header/p/strong/text()";
 const COURSE_PUBLISHED_XPATH = "//article[2]/header/p/text()[1]";
 
 $scrapeCoursePageArray = ["courseName"=>COURSE_NAME_XPATH,
-                          "courseURL"=>COURSE_URL_XPATH,
+                          //"courseURL"=>COURSE_URL_XPATH,
                           "courseCode"=>COURSE_CODE_XPATH,
                           "coursePlan"=>COURSE_PLAN_XPATH,
                           "courseFirst"=>COURSE_FIRST_XPATH,
                           "courseHeading"=>COURSE_HEADING_XPATH,
                           "courseAuthor"=>COURSE_AUTHOR_XPATH,
-                          "coursePublished"=>COURSE_PUBLISHED_XPATH];
+                          "coursePublished"=>COURSE_PUBLISHED_XPATH
+];
 
 /*
  * Constant xpaths for the course list scraping
@@ -83,7 +97,9 @@ const PAGE_ALL_COURSES_NAMES_XPATH = "//*[@id='blogs-list']/li/div[@class='item'
 $scrapeListPageArray = ["currentPath" => PAGE_CURRENT_XPATH, //Current page number
                         "nextPage"    => PAGE_NEXT_XPATH, //Next page path
                         "courseLinks" => PAGE_ALL_COURSES_LINKS_XPATH, //Links to courses
-                        "courseNames" => PAGE_ALL_COURSES_NAMES_XPATH]; //Names of the courses
+                        //"courseNames" => PAGE_ALL_COURSES_NAMES_XPATH //Names of the courses
+
+];
 
 
 echo "<!DOCTYPE html><html><body>";
@@ -186,28 +202,22 @@ function scrape_courseList($url, $scrapeListPageArray, $pageBase, &$coursePageLi
 
     scrape_courseList($nextPageLink, $scrapeListPageArray, $pageBase, $coursePageLinks, $courseNames);
 }
-foreach($courseNames as $cn){
-    echo $cn . "<br>";
-}
+/*foreach($courseNames as $cn){
+    //echo $cn . "<br>";
+}*/
 foreach ($coursePageLinks as $cpl) {
     echo $cpl . "<br>";
 }
 $courses = [];
-/*
-["courseName"=>COURSE_NAME_XPATH,
- "courseURL"=>COURSE_URL_XPATH,
- "courseCode"=>COURSE_CODE_XPATH,
- "coursePlan"=>COURSE_PLAN_XPATH,
- "courseFirst"=>COURSE_FIRST_XPATH,
- "courseHeading"=>COURSE_HEADING_XPATH,
- "courseAuthor"=>COURSE_AUTHOR_XPATH,
- "coursePublished"=>COURSE_PUBLISHED_XPATH];
-*/
+$courses["courses"]=[];
 foreach($coursePageLinks as $cpl){
-    echo $cpl;
-    $courses[] = scrape_coursePage($cpl, $scrapeCoursePageArray);
+    $courses["courses"][] = scrape_coursePage($cpl, $scrapeCoursePageArray);
+
 }
-var_dump(json_encode($courses));
+$courses["donewhen"] = time();
+$courses["amount_of_courses"] = count($courses["courses"])-1;
+file_put_contents("result.json",json_encode($courses));
+
 function scrape_coursePage($url, $scrapeCoursePageArray){
     $object = [];
     $object["courseURL"] = $url;
@@ -227,6 +237,11 @@ function scrape_coursePage($url, $scrapeCoursePageArray){
             $object[$xpath_name] = trim($x->nodeValue);
         }
     }
+    /*foreach($scrapeCoursePageArray as $xpath_name=>$xpath_string){
+        if(!isset($object[$xpath_name])){
+            $object[$xpath_name] = "no information";
+        }
+    }*/
     return $object;
 }
 

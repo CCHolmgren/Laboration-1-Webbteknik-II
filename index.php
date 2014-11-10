@@ -63,14 +63,14 @@ const COURSE_HEADING_XPATH = "//article[2]/header/h1/a/text()";
 const COURSE_AUTHOR_XPATH = "//article[2]/header/p/strong/text()";
 const COURSE_PUBLISHED_XPATH = "//article[2]/header/p/text()[1]";
 
-$scrapeCoursePageArray = [COURSE_NAME_XPATH,
-                          COURSE_URL_XPATH,
-                          COURSE_CODE_XPATH,
-                          COURSE_PLAN_XPATH,
-                          COURSE_FIRST_XPATH,
-                          COURSE_HEADING_XPATH,
-                          COURSE_AUTHOR_XPATH,
-                          COURSE_PUBLISHED_XPATH];
+$scrapeCoursePageArray = ["courseName"=>COURSE_NAME_XPATH,
+                          "courseURL"=>COURSE_URL_XPATH,
+                          "courseCode"=>COURSE_CODE_XPATH,
+                          "coursePlan"=>COURSE_PLAN_XPATH,
+                          "courseFirst"=>COURSE_FIRST_XPATH,
+                          "courseHeading"=>COURSE_HEADING_XPATH,
+                          "courseAuthor"=>COURSE_AUTHOR_XPATH,
+                          "coursePublished"=>COURSE_PUBLISHED_XPATH];
 
 /*
  * Constant xpaths for the course list scraping
@@ -80,14 +80,163 @@ const PAGE_NEXT_XPATH = "//div[@id='pag-top']/div/a[contains(@class, 'next')]/@h
 const PAGE_ALL_COURSES_LINKS_XPATH = "//*[@id='blogs-list']/li/div[@class='item']/div[@class='item-title']/a/@href";
 const PAGE_ALL_COURSES_NAMES_XPATH = "//*[@id='blogs-list']/li/div[@class='item']/div[@class='item-title']/a/text()";
 
-$scrapeListPageArray = [PAGE_CURRENT_XPATH,
-                        PAGE_NEXT_XPATH,
-                        PAGE_ALL_COURSES_LINKS_XPATH,
-                        PAGE_ALL_COURSES_NAMES_XPATH];
+$scrapeListPageArray = ["currentPath" => PAGE_CURRENT_XPATH, //Current page number
+                        "nextPage"    => PAGE_NEXT_XPATH, //Next page path
+                        "courseLinks" => PAGE_ALL_COURSES_LINKS_XPATH, //Links to courses
+                        "courseNames" => PAGE_ALL_COURSES_NAMES_XPATH]; //Names of the courses
 
 
 echo "<!DOCTYPE html><html><body>";
 
+$start_path = "https://coursepress.lnu.se/kurser/";
+$pageBase = "https://coursepress.lnu.se";
+$nextPageLink = "";
+$coursePageLinks = [];
+$courseNames = [];
+$times = 0;
+$stop = false;
+
+/*do {
+    $page = curl($start_path, "PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv");
+
+    $domFirstPage = new DOMDocument();
+
+    //Because fuck HTML 5, right?
+    libxml_use_internal_errors(true);
+    $domFirstPage->loadHTML($page);
+    libxml_use_internal_errors(false);
+
+    $xpath = new DOMXPath($domFirstPage);
+
+    foreach ($scrapeListPageArray as $xpath_name => $xpath_string) {
+        if ($xpath_name === "currentPath") {
+            continue;
+        } else if ($xpath_name === "nextPage") {
+            foreach ($xpath->query($xpath_string) as $x) {
+                $nextPageLink = $pageBase . $x->nodeValue;
+                echo $nextPageLink . "<br>" . $start_path . "<br>";
+
+                if ($nextPageLink === $start_path) {
+                    $stop = true;
+                }
+            }
+        } else if ($xpath_name === "courseLinks") {
+            foreach ($xpath->query($xpath_string) as $x) {
+                //Exclude the links that aren't courses
+                if(strpos($x->nodeValue, $pageBase."/kurs/") !== false){
+                    $coursePageLinks[] = $x->nodeValue;
+                }
+            }
+        } else if ($xpath_name === "courseNames") {
+            foreach ($xpath->query($xpath_string) as $x) {
+                $courseNames[] = $x->nodeValue;
+            }
+        }
+    }
+    if($start_path === $nextPageLink)
+        break;
+    $start_path = $nextPageLink;
+} while (true);*/
+$coursePageLinks = [];
+$courseNames = [];
+scrape_courseList("https://coursepress.lnu.se/kurser/", $scrapeListPageArray, $pageBase, $coursePageLinks, $courseNames);
+
+function scrape_courseList($url, $scrapeListPageArray, $pageBase, &$coursePageLinks, &$courseNames){
+    if($url==="")
+        return;
+    $page = curl($url, "PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv");
+    $nextPageLink = "";
+    $domFirstPage = new DOMDocument();
+
+
+    //Because fuck HTML 5, right?
+    libxml_use_internal_errors(true);
+    $domFirstPage->loadHTML($page);
+    libxml_use_internal_errors(false);
+
+    $xpath = new DOMXPath($domFirstPage);
+    foreach ($scrapeListPageArray as $xpath_name => $xpath_string) {
+        if ($xpath_name === "currentPath") {
+            continue;
+        } else if ($xpath_name === "nextPage") {
+            foreach ($xpath->query($xpath_string) as $x) {
+                $nextPageLink = $pageBase . $x->nodeValue;
+                echo $nextPageLink . "<br>" . $url . "<br>";
+
+                if ($nextPageLink === $url) {
+                    $stop = true;
+                }
+            }
+        } else if ($xpath_name === "courseLinks") {
+            foreach ($xpath->query($xpath_string) as $x) {
+                //Exclude the links that aren't courses
+                if(strpos($x->nodeValue, $pageBase."/kurs/") !== false){
+                    $coursePageLinks[] = $x->nodeValue;
+                }
+            }
+        }
+        /*else if ($xpath_name === "courseNames") {
+            foreach ($xpath->query($xpath_string) as $x) {
+                $courseNames[] = $x->nodeValue;
+            }
+        }*/
+    }
+    if($url === $nextPageLink)
+        return;
+
+    scrape_courseList($nextPageLink, $scrapeListPageArray, $pageBase, $coursePageLinks, $courseNames);
+}
+foreach($courseNames as $cn){
+    echo $cn . "<br>";
+}
+foreach ($coursePageLinks as $cpl) {
+    echo $cpl . "<br>";
+}
+$courses = [];
+/*
+["courseName"=>COURSE_NAME_XPATH,
+ "courseURL"=>COURSE_URL_XPATH,
+ "courseCode"=>COURSE_CODE_XPATH,
+ "coursePlan"=>COURSE_PLAN_XPATH,
+ "courseFirst"=>COURSE_FIRST_XPATH,
+ "courseHeading"=>COURSE_HEADING_XPATH,
+ "courseAuthor"=>COURSE_AUTHOR_XPATH,
+ "coursePublished"=>COURSE_PUBLISHED_XPATH];
+*/
+foreach($coursePageLinks as $cpl){
+    echo $cpl;
+    $courses[] = scrape_coursePage($cpl, $scrapeCoursePageArray);
+}
+var_dump(json_encode($courses));
+function scrape_coursePage($url, $scrapeCoursePageArray){
+    $object = [];
+    $object["courseURL"] = $url;
+
+    $page = curl($url, "PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv");
+    $domFirstPage = new DOMDocument();
+
+    //Because fuck HTML 5, right?
+    libxml_use_internal_errors(true);
+    $domFirstPage->loadHTML($page);
+    libxml_use_internal_errors(false);
+
+    $xpath = new DOMXPath($domFirstPage);
+
+    foreach ($scrapeCoursePageArray as $xpath_name => $xpath_string) {
+        foreach($xpath->query($xpath_string) as $x){
+            $object[$xpath_name] = trim($x->nodeValue);
+        }
+    }
+    return $object;
+}
+
+
+
+
+
+
+
+/*
 $response = curl("https://coursepress.lnu.se/kurs/brukarorienterad-design/", "PHP cURL testing ch222kv");
 
 $dom = new DOMDocument();
@@ -99,64 +248,11 @@ libxml_use_internal_errors(false);
 $dom->preserveWhiteSpace = false;
 $xpath = new DOMXPath($dom);
 
-foreach($scrapeCoursePageArray as $xpath_string){
-    foreach($xpath->query($xpath_string) as $x)
-    {
+foreach ($scrapeCoursePageArray as $xpath_string) {
+    foreach ($xpath->query($xpath_string) as $x) {
         echo "<pre>";
         var_export(trim($x->nodeValue));
         echo "</pre><br>";
     }
-}
-/*
-//Kursens namn
-foreach ($xpath->query(COURSE_NAME_XPATH) as $x) {
-    echo "<pre>";
-    var_export($x->nodeValue);
-    echo "</pre><br>";
-}
-//Kurswebbplatsens URL
-foreach ($xpath->query(COURSE_URL_XPATH) as $x) {
-    echo "<pre>";
-    var_export(trim($x->nodeValue));
-    echo "</pre><br>";
-}
-//kurskod
-foreach ($xpath->query(COURSE_CODE_XPATH) as $x) {
-    echo "<pre>";
-    var_export($x->nodeValue);
-    echo "</pre><br>";
-}
-//Kursplan
-foreach ($xpath->query(COURSE_PLAN_XPATH) as $x) {
-    echo "<pre>";
-    echo "<a href=";
-    var_export($x->nodeValue);
-    echo ">Kursplan</a>";
-    echo "</pre><br>";
-}
-//Inledande text
-foreach ($xpath->query(COURSE_FIRST_XPATH) as $x) {
-    echo "<pre>";
-    var_export(trim($x->nodeValue));
-    echo "</pre><br>";
-}
-//Rubrik
-foreach ($xpath->query(COURSE_HEADING_XPATH) as $x) {
-    echo "<pre>";
-    var_export($x->nodeValue);
-    echo "</pre><br>";
-}
-//Författare
-foreach ($xpath->query(COURSE_AUTHOR_XPATH) as $x) {
-    echo "<pre>";
-    var_export($x->nodeValue);
-    echo "</pre><br>";
-}
-//Publicerad av
-foreach ($xpath->query(COURSE_PUBLISHED_XPATH) as $x) {
-    echo "<pre>";
-    var_export(trim($x->nodeValue));
-    echo "</pre><br>";
-}
-*/
+}*/
 echo "</body></html>";

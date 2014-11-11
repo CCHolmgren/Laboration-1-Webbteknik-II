@@ -23,6 +23,9 @@ const SCRAPING_STARTED_FILENAME = "started_scraping.txt";
 const COURSE_NAME_XPATH = '//*[@id="header-wrapper"]/h1/a/text()';
 const COURSE_URL_XPATH = '//*[@id="header-wrapper"]/h1/a/@href';
 const COURSE_CODE_XPATH = '//*[@id="header-wrapper"]/ul/li[3]/a/text()';
+//Kursplan also follows a nice format, but if we assume that it would follow that format, and they changed it
+//Then it would be bad. If we use this xpath to get to the kursplan then we can atleast assume we get it correct
+//As long as they do not rename the link or remove it
 const COURSE_PLAN_XPATH = "//a[text()='Kursplan']/@href";
 const COURSE_FIRST_XPATH = '//section/article[contains(@class, "start-page")]/div';
 const COURSE_HEADING_XPATH = "//article[2]/header/h1/a/text()";

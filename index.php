@@ -79,7 +79,15 @@ function get_page($url, $use_curl = true) {
     }
 }
 
-function scrape_courseList($url, $scrapeListPageArray, $pageBase, &$coursePageLinks, &$courseNames, &$courses, $scrapeCoursePageArray) {
+/**
+ * @param $url
+ * @param $scrapeListPageArray
+ * @param $pageBase
+ * @param $courses array It will contain the result of the scraping,
+ * or nothing if there was some problem with the scraping
+ * @param $scrapeCoursePageArray
+ */
+function scrape_courseList($url, $scrapeListPageArray, $pageBase, &$courses, $scrapeCoursePageArray) {
     if ($url === "") {
         return;
     }
@@ -110,27 +118,23 @@ function scrape_courseList($url, $scrapeListPageArray, $pageBase, &$coursePageLi
     if ($url === $nextPageLink) {
         return;
     }
-    scrape_courseList($nextPageLink, $scrapeListPageArray, $pageBase, $coursePageLinks, $courseNames, $courses, $scrapeCoursePageArray);
+    scrape_courseList($nextPageLink, $scrapeListPageArray, $pageBase, $courses, $scrapeCoursePageArray);
 }
 
 
 function scrape_coursePage($url, $scrapeCoursePageArray) {
     $object = [];
     $object["courseURL"] = $url;
-    /*$page = get_page($url);
-    $domFirstPage = new DOMDocument();
 
-    //Because fuck HTML 5, right?
-    libxml_use_internal_errors(true);
-    $domFirstPage->loadHTML($page);
-    libxml_use_internal_errors(false);
-
-    $xpath = new DOMXPath($domFirstPage);*/
     $xpath = get_xpath($url);
 
     foreach ($scrapeCoursePageArray as $xpath_name => $xpath_string) {
         foreach ($xpath->query($xpath_string) as $x) {
-            $object[$xpath_name] = trim($x->nodeValue);
+            if(!$x->nodeValue){
+                $object[$xpath_name] = "no information";
+            } else {
+                $object[$xpath_name] = trim($x->nodeValue);
+            }
         }
     }
 

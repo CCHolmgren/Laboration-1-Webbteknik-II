@@ -11,23 +11,22 @@ set_time_limit(TIME_LIMIT);
 /*
  * Handles redirections and now I do not need to write all the ugly C-style initialization of curl
  */
-function curl($url, $retry = 0) {
-    $ch = curl_init();
-    $user_agent = "PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv";
-    curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
-    curl_setopt($ch, CURLOPT_HEADER, false);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+function curl($url, $useragent = "PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv", $retry = 0) {
     if ($retry > 5) {
         print "Maximum 5 retries are done, skipping!\n";
 
         return "in loop!";
     }
-    if ($ch === null) {
-        $ch = curl_init();
-    }
 
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_USERAGENT, $useragent);
+    curl_setopt($ch, CURLOPT_HEADER, false);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
     curl_setopt($ch, CURLOPT_URL, $url);
+
+
+
     $result = curl_exec($ch);
 
 
@@ -35,7 +34,7 @@ function curl($url, $retry = 0) {
     if (preg_match("|Location: (https?://\S+)|", $result, $m)) {
         print "Manually doing follow redirect!\n$m[1]\n";
 
-        return curl($m[1], $user_agent, $retry + 1, $ch);
+        return curl($m[1], $useragent, $retry + 1, $ch);
     }
 
     // add another condition here if the location is like Location: /home/products/index.php
@@ -65,8 +64,8 @@ function get_page($url) {
         ]
     ];
     $context = stream_context_create($opts);
-
-    return mb_convert_encoding(file_get_contents($url, null, $context), 'HTML-ENTITIES', "UTF-8");
+    return mb_convert_encoding(curl($url), 'HTML-ENTITIES', "UTF-8");
+    //return mb_convert_encoding(file_get_contents($url, null, $context), 'HTML-ENTITIES', "UTF-8");
 }
 function scrape_courseList($url, $scrapeListPageArray, $pageBase, &$coursePageLinks, &$courseNames) {
     if ($url === "") {

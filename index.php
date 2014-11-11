@@ -79,7 +79,7 @@ function get_page($url, $use_curl = true) {
     }
 }
 
-function scrape_courseList($url, $scrapeListPageArray, $pageBase, &$coursePageLinks, &$courseNames, $courses, $scrapeCoursePageArray) {
+function scrape_courseList($url, $scrapeListPageArray, $pageBase, &$coursePageLinks, &$courseNames, &$courses, $scrapeCoursePageArray) {
     if ($url === "") {
         return;
     }
@@ -329,9 +329,9 @@ if (file_exists("started_scraping.txt")) {
     exit;
 } else if (result_file_exists()) {
     $previous_result = get_result();
-    if ($previous_result["donewhen"] + TIME_BETWEEN_SCRAPES > time()) {
+    if ($previous_result[RESULT_DONEWHEN] + TIME_BETWEEN_SCRAPES > time()) {
         $timenow = time();
-        echo "Minimum time until next scrape: " . (TIME_BETWEEN_SCRAPES - ($timenow - $previous_result["donewhen"])) . " seconds.";
+        echo "Minimum time until next scrape: " . (TIME_BETWEEN_SCRAPES - ($timenow - $previous_result[RESULT_DONEWHEN])) . " seconds.";
         var_dump($previous_result);
         exit;
     }
@@ -365,11 +365,11 @@ session_write_close();
 
 scrape_courseList($start_path, $scrapeListPageArray, $pageBase, $coursePageLinks, $courseNames, $courses, $scrapeCoursePageArray);
 
-$courses["donewhen"] = time();
+$courses[RESULT_DONEWHEN] = time();
 $courses["timestarted"] = $timestarted;
-$courses["timetaken"] = $courses["donewhen"] - $timestarted;
-$courses["amount_of_courses"] = count($courses["courses"]) - 1;
+$courses["timetaken"] = $courses[RESULT_DONEWHEN] - $timestarted;
+$courses["amount_of_courses"] = count($courses["courses"]);
 
 save_result(json_encode($courses));
 //Who thought that unlink was a good name for removal of files?
-unlink("started_scraping.txt");
+unlink(SCRAPING_STARTED_FILENAME);

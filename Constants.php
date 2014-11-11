@@ -5,11 +5,13 @@
  * Date: 2014-11-11
  * Time: 13:50
  */
-const TIME_BETWEEN_SCRAPES = 600;
-const EXECUTION_TIME_LIMIT = 300;
+const TIME_BETWEEN_SCRAPES = 300;
+const EXECUTION_TIME_LIMIT = 100;
 const CURL_RETRY_LIMIT = 5;
 
 const USER_AGENT  = 'PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv';
+
+const RESULT_DONEWHEN = "donewhen";
 
 const RESULT_FILENAME = "result.json";
 const SCRAPING_STARTED_FILENAME = "started_scraping.txt";

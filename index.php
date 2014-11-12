@@ -14,19 +14,6 @@ require_once "CourseList.php";
 
 set_time_limit(EXECUTION_TIME_LIMIT);
 
-header('Content-type: text/html; charset=utf-8');
-$courseList = new CourseList("http://coursepress.lnu.se/kurser/",100);
-$courseList->scrapeList();
-var_dump($courseList->getListResult());
-$courseList->scrapePages();
-//$coursePageList = new CoursePageList();
-//$coursePageList->addCoursePageWithUrl("http://coursepress.lnu.se/kurs/webbteknik-ii/");
-var_dump($courseList->getResults());
-//$course = new CoursePage("http://coursepress.lnu.se/kurs/webbteknik-ii/");
-//$course->scrape();
-//var_dump($course->getResult());
-exit;
-
 /*
  * Methodology:
  * Scrape the course list page, get all the courses
@@ -53,9 +40,9 @@ echo "
     <body>
         <p>This page was generated at " . date("Y-m-d h:i:s", $timestarted) . "</p>";
 
-if (file_exists("started_scraping.txt")) {
+if (file_exists(SCRAPING_STARTED_FILENAME)) {
     echo "<p>The scraping has already started. It might take a while, please return later to find out when it is loaded.</p>";
-    echo "<p>Started " . (time() - file_get_contents("started_scraping.txt")) . " seconds ago.</p>";
+    echo "<p>Started " . (time() - file_get_contents(SCRAPING_STARTED_FILENAME)) . " seconds ago.</p>";
     exit;
 } else if (result_file_exists()) {
     $previous_result = get_result();
@@ -77,39 +64,20 @@ echo "
 
 //The browser will load until we tell it that the content has all been loaded, and that is done via this header setting
 $size = ob_get_length();
-header("Content-Length: $size");
+//header("Content-Length: $size");
 
 //Flush everything to the browser, and then end the streaming to the browser
-ob_end_flush();
+//ob_end_flush();
 flush();
 session_write_close();
 
-//Test with the object oriented Scraping
-/*
-$scraper = new Scrape($start_path, "PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv", true, $pageBase, $scrapeCoursePageArray, $scrapeListPageArray);
-$scraper->start();
-$courses = $scraper->get_result();
-*/
-
 //Initial things to start the scraping
 $start_path = "http://coursepress.lnu.se/kurser/";
-$pageBase = "http://coursepress.lnu.se";
-$nextPageLink = "";
-$times = 0;
-$stop = false;
-$coursePageLinks = [];
-$courseNames = [];
-$courses = ["courses" => []];
-//$result = recursive($start_path, $scrapeListPageArray, $pageBase, $scrapeCoursePageArray);
-//var_dump($result);
-scrape_courseList($start_path, $scrapeListPageArray, $pageBase, $courses, $scrapeCoursePageArray);
 
-//Set the other things in the $courses array that we then serialize to json via the save_result function
-$courses[RESULT_DONEWHEN] = time();
-$courses["timestarted"] = $timestarted;
-$courses["timetaken"] = $courses[RESULT_DONEWHEN] - $timestarted;
-$courses["amount_of_courses"] = count($courses["courses"]);
+$courseList = new CourseList($start_path);
+$courseList->scrapeList();
+$courseList->scrapePages();
 
-save_result($courses);
+save_result($courseList->getResults());
 //Who thought that unlink was a good name for removal of files?
 unlink(SCRAPING_STARTED_FILENAME);

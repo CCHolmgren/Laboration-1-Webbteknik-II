@@ -8,7 +8,7 @@ Sökmotorer är ett annat väldigt tydligt exempel av webbskrapor. De är oftast
 
 Hur har du i din skrapning underlättat för serverägaren?
 =====================
-Det är lätt att belasta servern väldigt mycket genom att begära en resurs som kräver mycket av servern, och därför bör man lägg in någon form utav broms i systemet så att man inte skapar en DOS attack. Inte skrapa stora resurser kan vara snällt, så som att undvika att ladda ner alla bilder man hittar eller så.
+Jag har försökt att underlätta i min skrapning genom att lägga in en grundläggande broms, som bromsar i några microsekunder mellan varje skrapning. Jag har också en tidsbegränsning som gör att det inte går att skrapa oftare än var 5:e minut.
 
 Vilka etiska aspekter bör man fundera kring vid webbskrapning?
 =====================

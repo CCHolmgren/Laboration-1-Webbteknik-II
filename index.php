@@ -6,6 +6,25 @@
  * Time: 14:18
  */
 require_once("Constants.php");
+require_once("Functions.php");
+require_once("ScrapeClass.php");
+require_once "CoursePage.php";
+header('Content-type: text/html; charset=utf-8');
+$coursePageList = new CoursePageList();
+$coursePageList->addCoursePageWithUrl("http://coursepress.lnu.se/kurs/webbteknik-ii/");
+$coursePageList->addCoursePageWithUrl("http://coursepress.lnu.se/kurs/webbteknik-ii/");
+$coursePageList->addCoursePageWithUrl("http://coursepress.lnu.se/kurs/webbteknik-ii/");
+$coursePageList->addCoursePageWithUrl("http://coursepress.lnu.se/kurs/webbteknik-ii/");
+$coursePageList->addCoursePageWithUrl("http://coursepress.lnu.se/kurs/webbteknik-ii/");
+$coursePageList->scrapePages();
+$coursePageList->scrapePages();
+$coursePageList->scrapePages();
+$coursePageList->scrapePages();
+var_dump($coursePageList->getResults());
+//$course = new CoursePage("http://coursepress.lnu.se/kurs/webbteknik-ii/");
+//$course->scrape();
+//var_dump($course->getResult());
+exit;
 
 /*
  * Methodology:
@@ -17,305 +36,6 @@ require_once("Constants.php");
  */
 set_time_limit(EXECUTION_TIME_LIMIT);
 
-/*
- * Handles redirections and now I do not need to write all the ugly C-style initialization of curl
- */
-function curl($url, $retry = 0) {
-    if ($retry > CURL_RETRY_LIMIT) {
-        print "Maximum ".CURL_RETRY_LIMIT." retries are done, skipping!\n";
-
-        return "in loop!";
-    }
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_USERAGENT, USER_AGENT);
-    curl_setopt($ch, CURLOPT_HEADER, false);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-    curl_setopt($ch, CURLOPT_URL, $url);
-
-    $result = curl_exec($ch);
-
-    // handling the follow redirect
-    if (preg_match("|Location: (https?://\S+)|", $result, $m)) {
-        print "Manually doing follow redirect!\n$m[1]\n";
-
-        return curl($m[1], $retry + 1, $ch);
-    }
-
-    // add another condition here if the location is like Location: /home/products/index.php
-    return $result;
-}
-
-function get_xpath($url) {
-    $page = get_page($url);
-
-    $domFirstPage = new DOMDocument();
-
-    //Because fuck HTML 5, right?
-    //This is because otherwise DOMDocument loadHTML breaks if the page is of HTML5 type,
-    //since it doesn't include a XML declaration really
-    libxml_use_internal_errors(true);
-    $domFirstPage->loadHTML($page);
-    libxml_use_internal_errors(false);
-
-    $xpath = new DOMXPath($domFirstPage);
-
-    return $xpath;
-}
-
-function get_page($url, $use_curl = true) {
-    if($use_curl){
-        return mb_convert_encoding(curl($url), 'HTML-ENTITIES', "UTF-8");
-    } else {
-        $opts = [
-            'http' => [
-                'method'     => 'GET',
-                'user_agent' => USER_AGENT
-            ]
-        ];
-        $context = stream_context_create($opts);
-        return mb_convert_encoding(file_get_contents($url, null, $context), 'HTML-ENTITIES', "UTF-8");
-    }
-}
-
-/**
- * @param $url
- * @param $scrapeListPageArray
- * @param $pageBase
- * @param $courses array It will contain the result of the scraping,
- * or nothing if there was some problem with the scraping
- * @param $scrapeCoursePageArray
- */
-function scrape_courseList($url, $scrapeListPageArray, $pageBase, &$courses, $scrapeCoursePageArray) {
-    if ($url === "") {
-        return;
-    }
-    $nextPageLink = "";
-
-    $xpath = get_xpath($url);
-    foreach ($scrapeListPageArray as $xpath_name => $xpath_string) {
-        if ($xpath_name === "currentPath") {
-            continue;
-        } else if ($xpath_name === "nextPage") {
-            foreach ($xpath->query($xpath_string) as $x) {
-                $nextPageLink = $pageBase . $x->nodeValue;
-
-                if ($nextPageLink === $url) {
-                    return;
-                }
-            }
-        } else if ($xpath_name === "courseLinks") {
-            foreach ($xpath->query($xpath_string) as $x) {
-                //Exclude the links that aren't courses
-                if (strpos($x->nodeValue, $pageBase . "/kurs/") !== false) {
-                    //Scrape the courses at the same time.
-                    $courses["courses"][] = scrape_coursePage($x->nodeValue, $scrapeCoursePageArray);
-                }
-            }
-        }
-    }
-    if ($url === $nextPageLink) {
-        return;
-    }
-    scrape_courseList($nextPageLink, $scrapeListPageArray, $pageBase, $courses, $scrapeCoursePageArray);
-}
-
-
-function scrape_coursePage($url, $scrapeCoursePageArray) {
-    $object = [];
-    $object["courseURL"] = $url;
-
-    $xpath = get_xpath($url);
-
-    foreach ($scrapeCoursePageArray as $xpath_name => $xpath_string) {
-        foreach ($xpath->query($xpath_string) as $x) {
-            if(!$x->nodeValue){
-                $object[$xpath_name] = "no information";
-            } else {
-                $object[$xpath_name] = trim($x->nodeValue);
-            }
-        }
-    }
-
-    return $object;
-}
-function save_result($result){
-    file_put_contents(RESULT_FILENAME, $result);
-}
-function get_result($decoded = true, $assoc=true){
-    if($decoded){
-        return json_decode(file_get_contents(RESULT_FILENAME), $assoc);
-    } else {
-        return file_get_contents(RESULT_FILENAME);
-    }
-
-}
-function result_file_exists(){
-    return file_exists(RESULT_FILENAME);
-}
-function save_scraping_started_file($time = null){
-    file_put_contents(SCRAPING_STARTED_FILENAME, $time === null ? time() : $time);
-}
-class Scrape {
-    private $url;
-    private $useragent;
-    private $use_curl;
-    private $courses;
-    private $scrapeCoursePageArray;
-    private $pageBase;
-    private $coursePageLinks;
-    private $courseNames;
-    private $scrapeListPageArray;
-
-    public function __construct($url,
-                                $useragent = "PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv",
-                                $use_curl = true,
-                                $pageBase = "",
-                                $scrapeCoursePageArray = [],
-                                $scrapeListPageArray = []) {
-        $this->url = $url;
-        $this->useragent = $useragent;
-        $this->use_curl = $use_curl;
-        $this->pageBase = $pageBase;
-        $this->coursePageLinks = [];
-        $this->courseNames = [];
-        $this->scrapeCoursePageArray = $scrapeCoursePageArray;
-        $this->scrapeListPageArray = $scrapeListPageArray;
-        $this->courses = ["courses" => []];
-    }
-
-    public function start() {
-        $timestarted = time();
-        $this->scrape_courseList();
-        $this->courses["donewhen"] = time();
-        $this->courses["timestarted"] = $timestarted;
-        $this->courses["timetaken"] = $this->courses["donewhen"] - $timestarted;
-        $this->courses["amount_of_courses"] = count($this->courses["courses"]);
-        var_dump($this->courses);
-
-        return;
-    }
-
-    private function scrape_courseList() {
-        if ($this->url === "") {
-            return "";
-        }
-        $nextPageLink = "";
-
-        $xpath = $this->get_xpath();
-        foreach ($this->scrapeListPageArray as $xpath_name => $xpath_string) {
-            if ($xpath_name === "currentPath") {
-                continue;
-            } else if ($xpath_name === "nextPage") {
-                foreach ($xpath->query($xpath_string) as $x) {
-                    $nextPageLink = $this->pageBase . $x->nodeValue;
-
-                    if ($nextPageLink === $this->url) {
-                        return "";
-                    }
-                }
-            } else if ($xpath_name === "courseLinks") {
-                foreach ($xpath->query($xpath_string) as $x) {
-                    //Exclude the links that aren't courses
-                    if (strpos($x->nodeValue, $this->pageBase . "/kurs/") !== false) {
-                        //Recursive scraping the courses
-                        var_dump($x->nodeValue);
-                        $this->courses["courses"][] =
-                            $this->scrape_coursePage($x->nodeValue, $this->scrapeCoursePageArray);
-                        var_dump($this->courses);
-                    }
-                }
-            }
-        }
-        if ($this->url === $nextPageLink) {
-            return "";
-        }
-        $this->url = $nextPageLink;
-
-        return $this->scrape_courseList();
-    }
-
-    private function get_xpath() {
-        $page = $this->get_page($this->url);
-
-        $domFirstPage = new DOMDocument();
-
-        //Because fuck HTML 5, right?
-        libxml_use_internal_errors(true);
-        $domFirstPage->loadHTML($page);
-        libxml_use_internal_errors(false);
-
-        $xpath = new DOMXPath($domFirstPage);
-
-        return $xpath;
-    }
-
-    private function get_page() {
-        if ($this->use_curl) {
-            $opts = [
-                'http' => [
-                    'method'     => 'GET',
-                    'user_agent' => 'PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv'
-                ]
-            ];
-            $context = stream_context_create($opts);
-
-            return mb_convert_encoding(file_get_contents($this->url, null, $context), 'HTML-ENTITIES', "UTF-8");
-        } else {
-            return mb_convert_encoding($this->curl($this->url), 'HTML-ENTITIES', "UTF-8");
-        }
-    }
-
-    private function curl($retry = 0) {
-        if ($retry > 5) {
-            print "Maximum 5 retries are done, skipping!\n";
-
-            return "in loop!";
-        }
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_USERAGENT, $this->useragent);
-        curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-        curl_setopt($ch, CURLOPT_URL, $this->url);
-
-        $result = curl_exec($ch);
-
-        // handling the follow redirect
-        if (preg_match("|Location: (https?://\S+)|", $result, $m)) {
-            print "Manually doing follow redirect!\n$m[1]\n";
-            $this->url = $m[1];
-
-            return curl($retry + 1);
-        }
-
-        // add another condition here if the location is like Location: /home/products/index.php
-        return $result;
-    }
-
-    private function scrape_coursePage() {
-        $object = [];
-        $object["courseURL"] = $this->url;
-
-        $xpath = $this->get_xpath();
-
-        foreach ($this->scrapeCoursePageArray as $xpath_name => $xpath_string) {
-            foreach ($xpath->query($xpath_string) as $x) {
-                $object[$xpath_name] = trim($x->nodeValue);
-            }
-        }
-        var_dump($object);
-
-        return $object;
-    }
-
-    public function get_result() {
-        return $this->courses;
-    }
-}
-
 $timestarted = time();
 
 ob_end_clean();
@@ -323,57 +43,73 @@ ob_start();
 header('Content-type: text/html; charset=utf-8');
 header("Connection: close");
 
-echo "<!DOCTYPE html><html><head><meta charset='UTF-8'> <title>Scrapy scrapy</title></head><body>";
-
-echo "Time that this page was generated: " . date("Y-m-d h:i:s", $timestarted) . "<br>";
+echo "
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>Scrapy scrapy</title>
+    </head>
+    <body>
+        <p>This page was generated at " . date("Y-m-d h:i:s", $timestarted) . "</p>";
 
 if (file_exists("started_scraping.txt")) {
-    echo "The scraping has already started. It might take a while, please return later to find out when it is loaded. ";
-    echo "Started " . (time() - file_get_contents("started_scraping.txt")) . " seconds ago";
+    echo "<p>The scraping has already started. It might take a while, please return later to find out when it is loaded.</p>";
+    echo "<p>Started " . (time() - file_get_contents("started_scraping.txt")) . " seconds ago.</p>";
     exit;
 } else if (result_file_exists()) {
     $previous_result = get_result();
     if ($previous_result[RESULT_DONEWHEN] + TIME_BETWEEN_SCRAPES > time()) {
         $timenow = time();
-        echo "Minimum time until next scrape: " . (TIME_BETWEEN_SCRAPES - ($timenow - $previous_result[RESULT_DONEWHEN])) . " seconds.";
+        echo "<p>Minimum time until next scrape: " . (TIME_BETWEEN_SCRAPES - ($timenow - $previous_result[RESULT_DONEWHEN])) . " seconds.</p>";
         var_dump($previous_result);
         exit;
     }
 }
 
+echo "<p>Starting the scraping of course list.</p>";
+save_scraping_started_file($timestarted);
+//file_put_contents("started_scraping.txt", $timestarted);
+
+echo "
+    </body>
+</html>";
+
+//The browser will load until we tell it that the content has all been loaded, and that is done via this header setting
+$size = ob_get_length();
+header("Content-Length: $size");
+
+//Flush everything to the browser, and then end the streaming to the browser
+ob_end_flush();
+flush();
+session_write_close();
+
+//Test with the object oriented Scraping
+/*
+$scraper = new Scrape($start_path, "PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv", true, $pageBase, $scrapeCoursePageArray, $scrapeListPageArray);
+$scraper->start();
+$courses = $scraper->get_result();
+*/
+
+//Initial things to start the scraping
 $start_path = "http://coursepress.lnu.se/kurser/";
 $pageBase = "http://coursepress.lnu.se";
 $nextPageLink = "";
 $times = 0;
 $stop = false;
-
 $coursePageLinks = [];
 $courseNames = [];
 $courses = ["courses" => []];
+//$result = recursive($start_path, $scrapeListPageArray, $pageBase, $scrapeCoursePageArray);
+//var_dump($result);
+scrape_courseList($start_path, $scrapeListPageArray, $pageBase, $courses, $scrapeCoursePageArray);
 
-echo "Starting the scraping of course list";
-save_scraping_started_file($timestarted);
-//file_put_contents("started_scraping.txt", $timestarted);
-
-echo "</body></html>";
-$size = ob_get_length();
-
-header("Content-Length: $size");
-ob_end_flush();
-flush();
-session_write_close();
-
-//$scraper = new Scrape($start_path, "PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv", true, $pageBase, $scrapeCoursePageArray, $scrapeListPageArray);
-//$scraper->start();
-//$courses = $scraper->get_result();
-
-scrape_courseList($start_path, $scrapeListPageArray, $pageBase, $coursePageLinks, $courseNames, $courses, $scrapeCoursePageArray);
-
+//Set the other things in the $courses array that we then serialize to json via the save_result function
 $courses[RESULT_DONEWHEN] = time();
 $courses["timestarted"] = $timestarted;
 $courses["timetaken"] = $courses[RESULT_DONEWHEN] - $timestarted;
 $courses["amount_of_courses"] = count($courses["courses"]);
 
-save_result(json_encode($courses));
+save_result($courses);
 //Who thought that unlink was a good name for removal of files?
 unlink(SCRAPING_STARTED_FILENAME);

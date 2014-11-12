@@ -12,6 +12,7 @@ const CURL_RETRY_LIMIT = 5;
 const USER_AGENT  = 'PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv';
 
 const RESULT_DONEWHEN = "donewhen";
+const NO_INFORMATION_TEXT = "no information";
 
 const RESULT_FILENAME = "result.json";
 const SCRAPING_STARTED_FILENAME = "started_scraping.txt";
@@ -32,14 +33,23 @@ const COURSE_HEADING_XPATH = "//article[2]/header/h1/a/text()";
 const COURSE_AUTHOR_XPATH = "//article[2]/header/p/strong/text()";
 const COURSE_PUBLISHED_XPATH = "//article[2]/header/p/text()[1]";
 
-$scrapeCoursePageArray = ["courseName"      => COURSE_NAME_XPATH,
+const COURSE_NAME_NAME = "courseName";
+const COURSE_URL_NAME = "courseURL";
+const COURSE_CODE_NAME = "courseCode";
+const COURSE_PLAN_NAME = "coursePlan";
+const COURSE_FIRST_NAME = "courseFirst";
+const COURSE_HEADING_NAME = "courseHeading";
+const COURSE_AUTHOR_NAME = "courseAuthor";
+const COURSE_PUBLISHED_NAME = "coursePublished";
+
+$scrapeCoursePageArray = [COURSE_NAME_NAME      => COURSE_NAME_XPATH,
                           //"courseURL"=>COURSE_URL_XPATH,
-                          "courseCode"      => COURSE_CODE_XPATH,
-                          "coursePlan"      => COURSE_PLAN_XPATH,
-                          "courseFirst"     => COURSE_FIRST_XPATH,
-                          "courseHeading"   => COURSE_HEADING_XPATH,
-                          "courseAuthor"    => COURSE_AUTHOR_XPATH,
-                          "coursePublished" => COURSE_PUBLISHED_XPATH
+                          COURSE_CODE_NAME      => COURSE_CODE_XPATH,
+                          COURSE_PLAN_NAME      => COURSE_PLAN_XPATH,
+                          COURSE_FIRST_NAME     => COURSE_FIRST_XPATH,
+                          COURSE_HEADING_NAME   => COURSE_HEADING_XPATH,
+                          COURSE_AUTHOR_NAME    => COURSE_AUTHOR_XPATH,
+                          COURSE_PUBLISHED_NAME => COURSE_PUBLISHED_XPATH
 ];
 
 /*
@@ -50,10 +60,15 @@ const PAGE_NEXT_XPATH = "//div[@id='pag-top']/div/a[contains(@class, 'next')]/@h
 const PAGE_ALL_COURSES_LINKS_XPATH = "//*[@id='blogs-list']/li/div[@class='item']/div[@class='item-title']/a/@href";
 const PAGE_ALL_COURSES_NAMES_XPATH = "//*[@id='blogs-list']/li/div[@class='item']/div[@class='item-title']/a/text()";
 
-$scrapeListPageArray = ["currentPath" => PAGE_CURRENT_XPATH, //Current page number
-                        "nextPage"    => PAGE_NEXT_XPATH, //Next page path
-                        "courseLinks" => PAGE_ALL_COURSES_LINKS_XPATH, //Links to courses
-                        //"courseNames" => PAGE_ALL_COURSES_NAMES_XPATH //Names of the courses
+const PAGE_CURRENT_NAME = "currentPath";
+const PAGE_NEXT_NAME = "nextPage";
+const PAGE_ALL_COURSES_LINKS_NAME = "courseLinks";
+const PAGE_ALL_COURSES_NAMES_NAME = "courseNames";
+
+$scrapeListPageArray = [PAGE_CURRENT_NAME => PAGE_CURRENT_XPATH, //Current page number
+                        PAGE_NEXT_NAME    => PAGE_NEXT_XPATH, //Next page path
+                        PAGE_ALL_COURSES_LINKS_NAME => PAGE_ALL_COURSES_LINKS_XPATH, //Links to courses
+                        //PAGE_ALL_COURSES_NAMES_NAME => PAGE_ALL_COURSES_NAMES_XPATH //Names of the courses
 
 ];
 

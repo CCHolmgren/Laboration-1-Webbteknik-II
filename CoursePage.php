@@ -7,6 +7,9 @@
  * Time: 11:46
  */
 class CoursePage {
+    /*
+     * Constants
+     */
     const COURSE_NAME_XPATH      = '//*[@id="header-wrapper"]/h1/a/text()';
     const COURSE_CODE_XPATH      = '//*[@id="header-wrapper"]/ul/li[3]/a/text()';
     const COURSE_PLAN_XPATH      = "//a[text()='Kursplan']/@href";
@@ -14,6 +17,7 @@ class CoursePage {
     const COURSE_HEADING_XPATH   = "//article[2]/header/h1/a/text()";
     const COURSE_AUTHOR_XPATH    = "//article[2]/header/p/strong/text()";
     const COURSE_PUBLISHED_XPATH = "//article[2]/header/p/text()[1]";
+
     const COURSE_NAME_NAME       = "name";
     const COURSE_CODE_NAME       = "coursecode";
     const COURSE_PLAN_NAME       = "courseplan";
@@ -21,17 +25,8 @@ class CoursePage {
     const COURSE_HEADING_NAME    = "courseheading";
     const COURSE_AUTHOR_NAME     = "latestsubmissioncreator";
     const COURSE_PUBLISHED_NAME  = "latestsubmissiontime";
-    const USER_AGENT             = 'PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv';
-    const NO_INFORMATION_TEXT    = "no information";
-    private $url;
-    private $name;
-    private $coursecode;
-    private $latestsubmissiontext;
-    private $latestsubmissioncreator;
-    private $latestsubmissiontime;
-    private $courseplan;
-    private $courseheading;
-    private $scraped;
+
+
     private $scrapeCoursePageArray = [self::COURSE_NAME_NAME      => self::COURSE_NAME_XPATH,
                                       self::COURSE_CODE_NAME      => self::COURSE_CODE_XPATH,
                                       self::COURSE_PLAN_NAME      => self::COURSE_PLAN_XPATH,
@@ -41,11 +36,29 @@ class CoursePage {
                                       self::COURSE_PUBLISHED_NAME => self::COURSE_PUBLISHED_XPATH
     ];
 
+    const USER_AGENT             = 'PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv';
+    const NO_INFORMATION_TEXT    = "no information";
+
+    /*
+     * Fields
+     */
+    private $url;
+    private $name;
+    private $coursecode;
+    private $latestsubmissiontext;
+    private $latestsubmissioncreator;
+    private $latestsubmissiontime;
+    private $courseplan;
+    private $courseheading;
+    private $scraped;
+
     public function __construct($url) {
         $this->url = $url;
         $this->scraped = false;
     }
-
+    /*
+     * Functions
+     */
     public function getResult() {
         return array("url"                  => $this->url,
                      "name"                 => $this->name,
@@ -115,16 +128,7 @@ class CoursePage {
         }
     }
 
-    function curl($retry = 0) {
-        /*if ($url === null) {
-            $url = $this->url;
-        }*/
-        /*if ($retry > CURL_RETRY_LIMIT) {
-            print "Maximum " . CURL_RETRY_LIMIT . " retries are done, skipping!\n";
-
-            return "in loop!";
-        }*/
-
+    function curl() {
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_USERAGENT, self::USER_AGENT);
@@ -135,14 +139,7 @@ class CoursePage {
 
         $result = curl_exec($ch);
         curl_close($ch);
-        // handling the follow redirect
-        /*if (preg_match("|Location: (https?://\S+)|", $result, $m)) {
-            print "Manually doing follow redirect!\n$m[1]\n";
 
-            return curl($m[1], $retry + 1, $ch);
-        }*/
-
-        // add another condition here if the location is like Location: /home/products/index.php
         return $result;
     }
 }
@@ -159,17 +156,27 @@ class CoursePageList implements Iterator {
         $this->coursepages[] = new CoursePage($url);
     }
 
+    public function addCoursePageWithArray(array $urls){
+        foreach($urls as $url){
+            $this->addCoursePageWithUrl($url);
+        }
+    }
+
     public function addCoursePage(CoursePage $coursePage) {
         $this->coursepages[] = $coursePage;
     }
 
-    public function scrapePages() {
+    public function scrapePages($limit = INF) {
         if ($this->coursepages) {
+            $count = 0;
             $this->results["startedscrape"] = time();
             /** @var CoursePage $page */
             foreach ($this as $page) {
-                $page->scrape();
-                usleep(mt_rand(1000,40000));
+                if($count < $limit){
+                    $page->scrape();
+                    $count += 1;
+                }
+                //usleep(mt_rand(1000,40000));
             }
             $this->results["stoppedscrape"] = time();
             $this->results["timetaken"] = $this->results["stoppedscrape"] - $this->results["startedscrape"];
@@ -187,6 +194,9 @@ class CoursePageList implements Iterator {
         }
     }
 
+    /*
+     * Iterator interface implementation
+     */
     public function rewind() {
         reset($this->coursepages);
     }

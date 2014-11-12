@@ -5,22 +5,23 @@
  * Date: 2014-11-05
  * Time: 14:18
  */
-require_once("Constants.php");
-require_once("Functions.php");
-require_once("ScrapeClass.php");
+
+require_once "Constants.php";
+require_once "Functions.php";
+require_once "ScrapeClass.php";
 require_once "CoursePage.php";
+require_once "CourseList.php";
+
+set_time_limit(EXECUTION_TIME_LIMIT);
+
 header('Content-type: text/html; charset=utf-8');
-$coursePageList = new CoursePageList();
-$coursePageList->addCoursePageWithUrl("http://coursepress.lnu.se/kurs/webbteknik-ii/");
-$coursePageList->addCoursePageWithUrl("http://coursepress.lnu.se/kurs/webbteknik-ii/");
-$coursePageList->addCoursePageWithUrl("http://coursepress.lnu.se/kurs/webbteknik-ii/");
-$coursePageList->addCoursePageWithUrl("http://coursepress.lnu.se/kurs/webbteknik-ii/");
-$coursePageList->addCoursePageWithUrl("http://coursepress.lnu.se/kurs/webbteknik-ii/");
-$coursePageList->scrapePages();
-$coursePageList->scrapePages();
-$coursePageList->scrapePages();
-$coursePageList->scrapePages();
-var_dump($coursePageList->getResults());
+$courseList = new CourseList("http://coursepress.lnu.se/kurser/",100);
+$courseList->scrapeList();
+var_dump($courseList->getListResult());
+$courseList->scrapePages();
+//$coursePageList = new CoursePageList();
+//$coursePageList->addCoursePageWithUrl("http://coursepress.lnu.se/kurs/webbteknik-ii/");
+var_dump($courseList->getResults());
 //$course = new CoursePage("http://coursepress.lnu.se/kurs/webbteknik-ii/");
 //$course->scrape();
 //var_dump($course->getResult());
@@ -34,7 +35,6 @@ exit;
  * end sometime
  * We create some form of object and then create a json object of those objects in an dictionary or something
  */
-set_time_limit(EXECUTION_TIME_LIMIT);
 
 $timestarted = time();
 

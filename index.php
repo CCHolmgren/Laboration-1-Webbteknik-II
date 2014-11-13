@@ -39,7 +39,8 @@ echo "
     </head>
     <body>
         <p>This page was generated at " . date("Y-m-d h:i:s", $timestarted) . "</p>";
-
+        echo "Result.json exists?";
+        var_dump(file_exists("result.json"));
 if (file_exists(realpath("") . SCRAPING_STARTED_FILENAME)) {
     echo "<p>The scraping has already started. It might take a while, please return later to find out when it is loaded.</p>";
     echo "<p>Started " . (time() - file_get_contents(SCRAPING_STARTED_FILENAME)) . " seconds ago.</p>";

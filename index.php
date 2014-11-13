@@ -44,6 +44,8 @@ echo "
 if (file_exists(realpath("") . SCRAPING_STARTED_FILENAME)) {
     echo "<p>The scraping has already started. It might take a while, please return later to find out when it is loaded.</p>";
     echo "<p>Started " . (time() - file_get_contents(SCRAPING_STARTED_FILENAME)) . " seconds ago.</p>";
+    ob_end_flush();
+    flush();
     exit;
 } else if (file_exists(realpath("") . "result.json")) {
     $previous_result = get_result();
@@ -51,6 +53,9 @@ if (file_exists(realpath("") . SCRAPING_STARTED_FILENAME)) {
         $timenow = time();
         echo "<p>Minimum time until next scrape: " . (TIME_BETWEEN_SCRAPES - ($timenow - $previous_result[RESULT_DONEWHEN])) . " seconds.</p>";
         var_dump($previous_result);
+
+        ob_end_flush();
+        flush();
         exit;
     }
 }
@@ -65,10 +70,10 @@ echo "
 
 //The browser will load until we tell it that the content has all been loaded, and that is done via this header setting
 $size = ob_get_length();
-//header("Content-Length: $size");
+header("Content-Length: $size");
 
 //Flush everything to the browser, and then end the streaming to the browser
-//ob_end_flush();
+ob_end_flush();
 flush();
 session_write_close();
 

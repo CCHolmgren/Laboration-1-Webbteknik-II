@@ -39,8 +39,6 @@ echo "
     </head>
     <body>
         <p>This page was generated at " . date("Y-m-d h:i:s", $timestarted) . "</p>";
-        echo "Result.json exists?";
-        var_dump(file_exists("result.json"));
 if (file_exists(SCRAPING_STARTED_FILENAME)) {
     echo "<p>The scraping has already started. It might take a while, please return later to find out when it is loaded.</p>";
     echo "<p>Started " . (time() - file_get_contents(SCRAPING_STARTED_FILENAME)) . " seconds ago.</p>";
@@ -52,8 +50,8 @@ if (file_exists(SCRAPING_STARTED_FILENAME)) {
     if ($previous_result[RESULT_DONEWHEN] + TIME_BETWEEN_SCRAPES > time()) {
         $timenow = time();
         echo "<p>Minimum time until next scrape: " . (TIME_BETWEEN_SCRAPES - ($timenow - $previous_result[RESULT_DONEWHEN])) . " seconds.</p>";
-        var_dump($previous_result);
-
+        echo "<a href='result.json'>Result.json</a>";
+        //var_dump($previous_result);
         ob_end_flush();
         flush();
         exit;

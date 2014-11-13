@@ -40,11 +40,11 @@ echo "
     <body>
         <p>This page was generated at " . date("Y-m-d h:i:s", $timestarted) . "</p>";
 
-if (file_exists(SCRAPING_STARTED_FILENAME)) {
+if (file_exists(realpath("") . SCRAPING_STARTED_FILENAME)) {
     echo "<p>The scraping has already started. It might take a while, please return later to find out when it is loaded.</p>";
     echo "<p>Started " . (time() - file_get_contents(SCRAPING_STARTED_FILENAME)) . " seconds ago.</p>";
     exit;
-} else if (result_file_exists()) {
+} else if (file_exists(realpath("") . "result.json")) {
     $previous_result = get_result();
     if ($previous_result[RESULT_DONEWHEN] + TIME_BETWEEN_SCRAPES > time()) {
         $timenow = time();
@@ -80,4 +80,4 @@ $courseList->scrapePages();
 
 save_result($courseList->getResults());
 //Who thought that unlink was a good name for removal of files?
-unlink(SCRAPING_STARTED_FILENAME);
+unlink(realpath("") . SCRAPING_STARTED_FILENAME);

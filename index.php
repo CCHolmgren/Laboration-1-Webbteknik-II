@@ -59,6 +59,7 @@ if (file_exists(SCRAPING_STARTED_FILENAME)) {
 }
 
 echo "<p>Starting the scraping of course list.</p>";
+echo "<a href='.'>Click here to see progress</a> or reload the page.";
 save_scraping_started_file($timestarted);
 //file_put_contents("started_scraping.txt", $timestarted);
 
@@ -68,12 +69,12 @@ echo "
 
 //The browser will load until we tell it that the content has all been loaded, and that is done via this header setting
 $size = ob_get_length();
-//header("Content-Length: $size");
+header("Content-Length: $size");
 
 //Flush everything to the browser, and then end the streaming to the browser
-//ob_end_flush();
-//flush();
-//session_write_close();
+ob_end_flush();
+flush();
+session_write_close();
 
 //Initial things to start the scraping
 $start_path = "http://coursepress.lnu.se/kurser/";
@@ -86,4 +87,3 @@ save_result($courseList->getResults());
 //Who thought that unlink was a good name for removal of files?
 
 unlink(SCRAPING_STARTED_FILENAME);
-var_dump(file_exists(SCRAPING_STARTED_FILENAME));

@@ -72,9 +72,7 @@ class CourseList {
             if ($name === self::PAGE_ALL_COURSES_LINKS_NAME) {
                 foreach ($xpath->query($xstring) as $x) {
                     if ($this->countScraped < $this->limit && strpos($x->nodeValue, "/kurs/") !== false) {
-                        var_dump($x->nodeValue);
-                        ob_flush();
-                        flush();
+
                         $this->countScraped += 1;
                         $this->coursePageLinks[] = $x->nodeValue;
                     }

@@ -76,9 +76,6 @@ class CoursePage {
 
             foreach ($this->scrapeCoursePageArray as $name => $xstring) {
                 foreach ($xpath->query($xstring) as $x) {
-                    var_dump($x->nodeValue);
-                    ob_flush();
-                    flush();
                     //The xpath will capture more than the time and date
                     if ($name === self::COURSE_PUBLISHED_NAME) {
                         $this->$name =
@@ -190,9 +187,6 @@ class CoursePageList implements Iterator {
             }
             $this->results["stoppedscrape"] = time();
             $this->results["timetaken"] = $this->results["stoppedscrape"] - $this->results["startedscrape"];
-            usort($this->results["courses"], function($a, $b){
-                return strcasecmp($a, $b);
-            });
         }
     }
 

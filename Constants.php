@@ -11,7 +11,7 @@ const CURL_RETRY_LIMIT = 5;
 
 const USER_AGENT  = 'PHP cURL scraping Webbteknik II - Laboration 1 - ch222kv';
 
-const RESULT_DONEWHEN = "donewhen";
+const RESULT_DONEWHEN = "stoppedscrape";
 const NO_INFORMATION_TEXT = "no information";
 
 const RESULT_FILENAME = "result.json";

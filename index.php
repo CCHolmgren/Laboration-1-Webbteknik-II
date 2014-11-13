@@ -41,13 +41,13 @@ echo "
         <p>This page was generated at " . date("Y-m-d h:i:s", $timestarted) . "</p>";
         echo "Result.json exists?";
         var_dump(file_exists("result.json"));
-if (file_exists(realpath("") . SCRAPING_STARTED_FILENAME)) {
+if (file_exists(SCRAPING_STARTED_FILENAME)) {
     echo "<p>The scraping has already started. It might take a while, please return later to find out when it is loaded.</p>";
     echo "<p>Started " . (time() - file_get_contents(SCRAPING_STARTED_FILENAME)) . " seconds ago.</p>";
     ob_end_flush();
     flush();
     exit;
-} else if (file_exists(realpath("") . "result.json")) {
+} else if (file_exists("result.json")) {
     $previous_result = get_result();
     if ($previous_result[RESULT_DONEWHEN] + TIME_BETWEEN_SCRAPES > time()) {
         $timenow = time();
@@ -70,12 +70,12 @@ echo "
 
 //The browser will load until we tell it that the content has all been loaded, and that is done via this header setting
 $size = ob_get_length();
-header("Content-Length: $size");
+//header("Content-Length: $size");
 
 //Flush everything to the browser, and then end the streaming to the browser
-ob_end_flush();
-flush();
-session_write_close();
+//ob_end_flush();
+//flush();
+//session_write_close();
 
 //Initial things to start the scraping
 $start_path = "http://coursepress.lnu.se/kurser/";
@@ -86,4 +86,6 @@ $courseList->scrapePages();
 
 save_result($courseList->getResults());
 //Who thought that unlink was a good name for removal of files?
-unlink(realpath("") . SCRAPING_STARTED_FILENAME);
+
+unlink(SCRAPING_STARTED_FILENAME);
+var_dump(file_exists(SCRAPING_STARTED_FILENAME));
